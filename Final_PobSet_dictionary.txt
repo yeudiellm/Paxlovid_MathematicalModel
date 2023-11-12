@@ -1,0 +1,40 @@
+#VARIABLES DESCRIPTIVAS 
+age_group: Grupo de edad de los pacientes 
+sex: Sexo de los pacientes 
+comorbidity: Si el grupo tiene o no comorbilidades
+ckd_group: Si el presente grupo tiene o no enfermedad renal cronica
+count_: Total de pacientes a nivel nacional para este grupo según la simulación de la distribución multi-bernoulli. 
+#PROBABILIDADES
+#Como salir de los sospechosos 
+prob_SA: Valor en [0, 1] Probabilidad de pertenecer al grupo ambulatorio tras ser sospechoso. 
+prob_SH: Valor en [0, 1] Probabilidad de pertenecer al grupo hospitalario tras ser sospechoso. 
+prob_SR: Valor en [0, 1] Probabilidad de pertenecer al grupo recuperados tras ser sospechoso. 
+#Como entrar en los recuperados 
+prob_AR: Valor en [0, 1] o distribución. Probabilidad de pasar de ambulatorio a recuperado en el día i.  
+prob_HR: Valor en [0, 1] o distribución. Probabilidad de pasar de hospitalario a recuperado en el día i.
+prob_IR: Valor en [0, 1] o distribución. Probabilidad de pasar de ICU a recuperado en el día i. 
+#Como entrar en los muertos 
+prob_AD: Valor en [0, 1] o distribución. Probabilidad de pasar de ambulatorio a recuperado en el día i.  
+prob_HD: Valor en [0, 1] o distribución. Probabilidad de pasar de hospitalario a recuperado en el día i.
+prob_ID: Valor en [0, 1] o distribución. Probabilidad de pasar de ICU a recuperado en el día i.
+#PROBABILIDADES QUE DEPENDEN DEL MEDICAMENTO 
+prob_AH_pxlvd: Valor en [0, 1]. Probabilidad de pasar de ambulatorio a hospitalario sabiendo que el paciente tomo paxvlodi. 
+prob_AH_NO_pxlvd: Valor en [0,1]. Probabilidad de pasar de ambulatorio a hospitalario con tratamiento asintomatico. 
+prob_HI_rmsvr: Valor en [0,1]. Probabilidad de pasar de hospitalario a ICU sabiendo que el paciente tomo redemsivir. 
+prob_HI_NO_rmsvr:Valor en [0,1]. Probabilidad de pasar de hospitalario a ICU sabiendo con tratamiento asintomatico. 
+#COSTOS (de estos no estoy 100% seguro que sean todos o si me pase). 
+cost_A_pxlvd_treatment: Tratamiento (drogas) si el paciente toma paxlovid en ambulatorio. 
+cost_A_NO_pxlvd_treatment: Costos de tratamiento (drogas) si el paciente NO toma paxlovid en ambulatorio.	
+cost_A_placebo_treatment: Costos de tratamiento placebo si el paciente tiene tratamiento asintomatico. (Creo que este es igual al anterior).  
+cost_A_healthcare: Costos de cuidado en ambulatorio (no medicamentos). 
+cost_A_healthcare_DayOne: Costos de cuidado en el día uno en hospitalario (al parecer son más caros). 
+cost_H_rmsvr_treatment: Costos de tratamiento (drogas) si el paciente toma redemsivir en hospitalario. 
+cost_H_NO_rmsvr_treatment: Costos de tratamiento (drogas) si el paciente NO toma redemsivir en hospitalario. 
+cost_H_placebo_treatment: Costos de tratamiento placebo si el paciente tiene tratamiento asintomatico. (Creo que este es igual al anterior).
+cost_H_healthcare: Costos de cuidado en hospitalario (no medicamentos).
+cost_H_healthcare_DayOne: Costos de cuidado en el día en hospitalario (al parecer son más caros).
+cost_I_medicine_treatment: Costos de tratamiento (drogas) en ICU. 
+cost_I_NO_medicine_treatment: Costos de tratamiento (otras drogas) en ICU (creo que esto no tiene sentido). 
+cost_I_placebo_treatment: Costos de tratamiento si no puede tomar nada durante ICU. 
+cost_I_healthcare: Costos de cuidado en ICU. 
+cost_I_healthcare_DayOne: Costos de cuidado durante el día uno en ICU. 
