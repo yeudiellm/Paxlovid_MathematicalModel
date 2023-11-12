@@ -6,8 +6,8 @@ library("tidyr")
 library("readr")  
 library("plotly")
 library("ggplot2")
-
-pob_input <-read.csv("C:/Users/yeudi/Downloads/Pob_comorbidity/COVID_transform_2022_v8.csv")
+path = "D:/GitHub/Paxlovid_MathematicalModel"
+pob_input <- read.csv(paste(path, "big_data/COVID_transform_2022_v9.csv", sep = "/"))
 pob_input$symptoms_date <-as.Date(pob_input$symptoms_date)
 pob_input$admission_date<-as.Date(pob_input$admission_date)
 pob_input$death_date    <-as.Date(pob_input$death_date)
@@ -31,7 +31,8 @@ prop.table(table(pob_covid$sex))
 round(100*prop.table(table(pob_covid$diagnostic_result)),2)
 
 morbidities <- c("obesity", "diabetes", "hyperten","ckd",
-                 "cardio","copd", "asma", "immuno", "hiv")
+                 "cardio","copd", "asthma", "immuno", "hiv")
+
 100*sort(colMeans(pob_covid[,morbidities]))
 100*sort(colMeans(pob_input[,morbidities]))
 
