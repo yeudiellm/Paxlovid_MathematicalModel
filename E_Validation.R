@@ -6,11 +6,12 @@ library("dplyr")
 library("tidyr")
 library("readr")
 #Datasets gold
-df_pob <-read.csv("C:/Users/yeudi/Downloads/Pob_comorbidity/COVID_transform_2022_v8.csv")
-df_counts<-read.csv("C:/Users/yeudi/Downloads/Pob_comorbidity/SUMMARY_SINAVE_2022.csv")
-df_sim <- read.csv("C:/Users/yeudi/Downloads/Pob_comorbidity/Bernoulli_Try0_Simulation.csv")
+path = "D:/GitHub/Paxlovid_MathematicalModel"
+df_pob <- read.csv(paste(path, "big_data/COVID_transform_2022_v9_p2.csv", sep = "/"))
+df_counts<-read.csv(paste(path, "data/SUMMARY_SINAVE_2022.csv", sep="/"))
+df_sim <- read.csv(paste(path, "data/Bernoulli_Full_Simulation.csv",sep="/"))
 morbidities <- c("obesity", "diabetes", "hyperten","ckd",
-                 "cardio","copd", "asma", "immuno", "hiv")
+                 "cardio","copd", "asthma", "immuno", "hiv")
 covars      <- c("comorbidity", "binary_patient_type", "covid", "death")
 classification_vars <- c("age_group_s","age", "sex")
 df_pob$comorbidity <- as.integer(apply(df_pob[,morbidities]==1, 1, any))
@@ -32,7 +33,8 @@ df_pob2 <- df_pob2%>% group_by(sex,age_group_s) %>%
 
 df_pob2
 View(df_pob2)
-write.csv(df_pob2, "C:/Users/yeudi/Downloads/Pob_comorbidity/val_sinave.csv")
+write.csv(df_pob2, 
+          paste(path, "data/val_sinave.csv", sep = "/"))
 
 #Validacion de la simulación
 useful <- c("age_group", "avg_age")
@@ -44,24 +46,55 @@ df_sim2 <- merge(x=df_sim,y=temp_data,
              by="age_group", all.x=TRUE)
 df_sim2$age_group_s    <- cut(df_sim2$avg_age, breaks=c(0, 18, 50, 65, Inf), right=FALSE)
 df_sim2$binary_patient_type <- as.integer(ifelse(df_sim2$binary_patient_type=="H", 1,0))
+
 covars      <- c("comorbidity", "binary_patient_type", "covid", "count", "death")
 classification_vars <- c("age_group_s","avg_age", "sex")
-df_sim2 <- df_sim2[,c(classification_vars, covars)]
+simulation_vars <-c("exec")
+df_sim2 <- df_sim2[,c(simulation_vars, classification_vars, covars)]
+View(df_sim2)
+ 
+df_sim2 %>% group_by(exec, sex) %>% dplyr::summarize(count_ = sum(count),
+                                                     .groups='drop')%>% 
+            group_by(sex) %>% dplyr::summarize(count_ = mean(count_))
 
-df_sim2 %>% group_by(sex) %>% dplyr::summarize(count_ = sum(count))
-
-df_sim_ <- df_sim2%>% group_by(sex, age_group_s) %>%
-  dplyr::summarize( count_ = sum(count), 
+df_sim_means <- df_sim2%>% group_by(exec, sex, age_group_s) %>%
+           dplyr::summarize( count_ = sum(count), 
                     prob_comorbidity = sum(count*comorbidity)/sum(count),
                     prob_covid       = sum(count*covid)/sum(count),
                     prob_hospital    = sum(count*binary_patient_type)/sum(count),
                     prob_death       = sum(death)/sum(count),
-                    .groups ='drop')
-df_sim_
-write.csv(df_sim_, "C:/Users/yeudi/Downloads/Pob_comorbidity/val_multbern.csv")
+                    .groups ='drop')  %>% 
+           group_by(sex, age_group_s) %>%
+           dplyr::summarize( count_ = mean(count_),
+                             prob_comorbidity = mean(prob_comorbidity),
+                             prob_covid       = mean(prob_covid),
+                             prob_hospital    = mean(prob_hospital),
+                             prob_death       = mean(prob_death),
+                             .groups= 'drop')
+
+df_sim_stds <- df_sim2%>% group_by(exec, sex, age_group_s) %>%
+           dplyr::summarize( count_ = sum(count), 
+                            prob_comorbidity = sum(count*comorbidity)/sum(count),
+                            prob_covid       = sum(count*covid)/sum(count),
+                            prob_hospital    = sum(count*binary_patient_type)/sum(count),
+                            prob_death       = sum(death)/sum(count),
+                            .groups ='drop')  %>% 
+                            group_by(sex, age_group_s) %>%
+            dplyr::summarize( count_ = mean(count_),
+                            prob_comorbidity = sd(prob_comorbidity),
+                            prob_covid       = sd(prob_covid),
+                            prob_hospital    = sd(prob_hospital),
+                            prob_death       = sd(prob_death),
+                            .groups= 'drop')
+View(df_sim_stds)
+View(df_sim_means)
+write.csv(df_sim_means, 
+           paste(path, "data/val_multbern_means.csv", sep = "/"))
+write.csv(df_sim_stds, 
+           paste(path, "data/val_multbern_stds.csv", sep="/"))
 
 
-#Prueba de bootstrap 
+#Prueba de bootstrap #Hay que mejorarla 
 boot_inter <- read.csv("C:/Users/yeudi/Downloads/Pob_comorbidity/Bootstrap_0.csv", 
                        row.names = 1)
 covars      <- c("binary_patient_type","covid", "sex")

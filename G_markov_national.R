@@ -4,11 +4,15 @@ library(diagram)
 library(heemod)
 library(ggplot2)
 path = "D:/GitHub/Paxlovid_MathematicalModel/data"
-
-markov_params      <-read.csv(paste(path, "Final_PobSet.csv", sep = "/"))
+general_params     <- read.csv(paste(path, "Gen_params.csv", sep="/"), 
+                      header=FALSE, row.names=1)
+general_params     <- as.data.frame(t(general_params))
+markov_params      <- read.csv(paste(path, "Final_PobSet.csv", sep = "/"))
 survival_nomed     <- read.csv(paste(path, "Prob_Nomed_30days.csv", sep="/"))
 survival_paxlovid  <- read.csv(paste(path, "Prob_Paxlovid_30days.csv", sep="/"))
 survival_redemsivir<- read.csv(paste(path, "Prob_Redemsivir_30days.csv", sep="/"))
+
+
 survival_nomed$patient_type <- as.integer(
                             ifelse(survival_nomed$patient_type=="H", 1,0))
 survival_paxlovid$patient_type <- as.integer(
@@ -26,7 +30,7 @@ survival_data_to_prob_death <- function(row, sdf, bin_patient_type){
                                      comorbidity==row$comorbidity,
                                      patient_type==bin_patient_type)
   filter_surv = filter_surv[,keys]
-  death_prob= 1-filter_surv
+  death_prob  = 1-filter_surv
   return(as.vector(death_prob))
 }
 #Limite inferior de intervalores
@@ -46,16 +50,16 @@ costs_vars  <- c("cost_A_pxlvd_treatment","cost_A_NO_pxlvd_treatment",
                  "cost_H_healthcare","cost_H_healthcare_DayOne",
                  "cost_I_medicine_treatment",
                  "cost_I_healthcare","cost_I_healthcare_DayOne")
-markov_params[, probs_vars][is.na(markov_params[,probs_vars])] <- 0.1
+
 sum(is.na(markov_params))
-
-names(markov_params)
-head(markov_params)
-
-
-define_parameters_with_row <- function(row, 
-                                       vec_prob_AD,
-                                       vec_prob_HD){
+#names(markov_params)
+#head(markov_params)
+names(general_params)
+#GLOBAL VARIABLES 
+vec_prob_AD <- rep(0.01, 30)  
+vec_prob_HD <- rep(0.01, 30)
+#Defining parameters
+define_parameters_with_row <- function(row,general_params){
   params <- define_parameters(
     #Suspicios to Sickness state
     #initial_probs_sum = row$prob_SA+row$prob_SH+row$prob_SR,
@@ -63,36 +67,36 @@ define_parameters_with_row <- function(row,
     prob_SH =row$prob_SH,
     prob_SR =row$prob_SR,
     #Sickness state to Recovery
-    prob_AR =row$prob_AR,
-    prob_HR =row$prob_HR, 
-    prob_IR =row$prob_IR, 
-    #Sickness state to Death #Esto hay que cambiarlo. 
+    prob_AR =general_params$prob_AR,
+    prob_HR =general_params$prob_HR, 
+    prob_IR =general_params$prob_IR, 
+    #Sickness state to Death. 
     #vec_prob_AD = vec_prob_AD, 
     #vec_prob_HD = vec_prob_HD,
     prob_AD =vec_prob_AD[model_time], 
     prob_HD =vec_prob_HD[model_time], 
-    prob_ID =row$prob_ID, 
+    prob_ID =general_params$prob_ID, 
     #Transition sickness 
-    prob_AH_pxlvd    =row$prob_AH_pxlvd, 
-    prob_AH_NO_pxlvd =row$prob_AH_NO_pxlvd, 
-    prob_HI_rmsvr    =row$prob_HI_rmsvr, 
-    prob_HI_NO_rmsvr =row$prob_HI_NO_rmsvr, 
+    prob_AH_pxlvd    =general_params$prob_AH_pxlvd, 
+    prob_AH_NO_pxlvd =general_params$prob_AH_NO_pxlvd, 
+    prob_HI_rmsvr    =general_params$prob_HI_rmsvr, 
+    prob_HI_NO_rmsvr =general_params$prob_HI_NO_rmsvr, 
     #Costs
     #Ambulatory
-    cost_A_pxlvd_treatment       = row$cost_A_pxlvd_treatment, 
-    cost_A_NO_pxlvd_treatment    = row$cost_A_NO_pxlvd_treatment, 
-    cost_A_healthcare            = row$cost_A_healthcare, 
-    cost_A_healthcare_DayOne     = row$cost_A_healthcare_DayOne, 
+    cost_A_pxlvd_treatment       = general_params$cost_A_pxlvd_treatment, 
+    cost_A_NO_pxlvd_treatment    = general_params$cost_A_NO_pxlvd_treatment, 
+    cost_A_healthcare            = general_params$cost_A_healthcare, 
+    cost_A_healthcare_DayOne     = general_params$cost_A_healthcare_DayOne, 
     #Hospitalary
-    cost_H_rmsvr_treatment       = row$cost_H_rmsvr_treatment,
-    cost_H_NO_rmsvr_treatment    = row$cost_H_NO_rmsvr_treatment, 
-    cost_H_healthcare            = row$cost_H_healthcare, 
-    cost_H_healthcare_DayOne     = row$cost_H_healthcare_DayOne, 
+    cost_H_rmsvr_treatment       = general_params$cost_H_rmsvr_treatment,
+    cost_H_NO_rmsvr_treatment    = general_params$cost_H_NO_rmsvr_treatment, 
+    cost_H_healthcare            = general_params$cost_H_healthcare, 
+    cost_H_healthcare_DayOne     = general_params$cost_H_healthcare_DayOne, 
     #ICU
-    cost_I_medicine_treatment    = row$cost_I_medicine_treatment, 
+    cost_I_medicine_treatment    = general_params$cost_I_medicine_treatment, 
     #cost_I_NO_medicine_treatment = row$cost_I_NO_medicine_treatment, 
-    cost_I_healthcare            = row$cost_I_healthcare, 
-    cost_I_healthcare_DayOne     = row$cost_I_healthcare_DayOne)
+    cost_I_healthcare            = general_params$cost_I_healthcare, 
+    cost_I_healthcare_DayOne     = general_params$cost_I_healthcare_DayOne)
   return(params)
 }
 
@@ -228,66 +232,67 @@ run_model_2<- function(strat,param, count_pob){
     ) 
     return(res_mod)
 }
-#Running strategy 1 
+#Final Params Sequences
+opt_strategies <- c("PXLVD", "RMSVR", "NOMED")
+opt_survivals  <- list(survival_paxlovid, survival_redemsivir, survival_nomed)
+opt_counts     <- c(0, 0, 0 )
+#Strategies
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
   row = markov_params[irow, ]
-  count_pxlvd =0
-  count_rmsvr =0
-  count_nomed =0
-  #count_pob   = markov_params[irow, "count_"]
-  count_pob =100
-  vec_prob_AD =survival_data_to_prob_death(row,
-                                           survival_nomed, 0)
-  vec_prob_HD =survival_data_to_prob_death(row,
-                                           survival_nomed, 1) 
-  param <- define_parameters_with_row(markov_params[irow,], vec_prob_AD, 
-                                      vec_prob_HD)
+  count_pob   = markov_params[irow, "count_"]
   medical_strategy = decision_strategy1(markov_params[irow,])
-  if (medical_strategy == "PXLVD"){
-    count_pxlvd =count_pxlvd+1 
+  for (i in 1:3){
+      if(medical_strategy == opt_strategies[i]){
+        vec_prob_AD <<- survival_data_to_prob_death(row, 
+                                          as.data.frame(opt_survivals[i]), 0)
+        vec_prob_HD <<- survival_data_to_prob_death(row,
+                                          as.data.frame(opt_survivals[i]), 1)
+        param <- define_parameters_with_row(markov_params[irow,],general_params)
+        opt_counts[i] = opt_counts[i]+1
+      }
+  }
+  if(medical_strategy=="PXLVD"){
     res_mod <- run_model_2(strat_pxlvd, param, count_pob)
   }
-  if (medical_strategy  == "RMSVR"){
-    count_rmsvr =count_rmsvr+1
+  if(medical_strategy=="RMSVR"){
     res_mod <- run_model_2(strat_rmsvr, param, count_pob)
   }
-  if (medical_strategy == "NOMED"){
-    count_nomed =count_nomed+1
+  if(medical_strategy=="NOMED"){
     res_mod <- run_model_2(strat_nomed, param, count_pob)
   }
   summary_count = res_mod$eval_strategy_list$strategy$counts
   summary_cost = res_mod$eval_strategy_list$strategy$values
-
   write.csv(summary_count,paste(path,"/strat1_counts_", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_cost,paste(path,"/strat1_cost_", irow, ".csv", sep=""),
             row.names=FALSE)
 }
-count_pxlvd
-count_rmsvr
-count_nomed
+
+opt_counts
+
+opt_counts     <- c(0, 0, 0 )
+
 #Running strategy 2 
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
   row = markov_params[irow, ]
-  count_pxlvd =0
-  count_rmsvr =0
-  count_nomed =0
-  #count_pob   = markov_params[irow, "count_"]
-  vec_prob_AD =survival_data_to_prob_death(row,
-                                           survival_nomed, 0)
-  vec_prob_HD =survival_data_to_prob_death(row,
-                                           survival_nomed, 1) 
-  param <- define_parameters_with_row(markov_params[irow,], vec_prob_AD, 
-                                      vec_prob_HD)
+  count_pob   = markov_params[irow, "count_"]
   medical_strategy = decision_strategy2(markov_params[irow,])
-  if (medical_strategy == "PXLVD"){
-    count_pxlvd =count_pxlvd+1 
+  for (i in 1:3){
+    if(medical_strategy == opt_strategies[i]){
+      vec_prob_AD <<- survival_data_to_prob_death(row, 
+                                                  as.data.frame(opt_survivals[i]), 0)
+      vec_prob_HD <<- survival_data_to_prob_death(row,
+                                                  as.data.frame(opt_survivals[i]), 1)
+      param <- define_parameters_with_row(markov_params[irow,],general_params)
+      opt_counts[i] = opt_counts[i]+1
+    }
+  }
+  if(medical_strategy=="PXLVD"){
     res_mod <- run_model_2(strat_pxlvd, param, count_pob)
   }
-  if (medical_strategy == "NOMED"){
-    count_nomed =count_nomed+1
+  if(medical_strategy=="NOMED"){
     res_mod <- run_model_2(strat_nomed, param, count_pob)
   }
   summary_count = res_mod$eval_strategy_list$strategy$counts
@@ -297,9 +302,8 @@ for ( irow in 1:nrow(markov_params)){
   write.csv(summary_cost,paste(path,"/strat2_cost_", irow, ".csv", sep=""),
             row.names=FALSE)
 }
-count_pxlvd
-count_rmsvr
-count_nomed
+
+opt_counts
   
 
   

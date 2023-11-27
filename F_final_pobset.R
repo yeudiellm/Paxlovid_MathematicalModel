@@ -49,7 +49,7 @@ useful_vars <- c("age_group", "sex","comorbidity", "ckd_group", "count_",
 summaryze1_vis <- summaryze1[, useful_vars]
 summaryze2_vis <- summaryze2[, useful_vars]
 summaryzeALL <- rbind(summaryze1_vis, summaryze2_vis)
-
+View(summaryze2)
 #Epsilon decimal correction
 summaryzeALL$prob_SR <- round(summaryzeALL$prob_SR,8)
 summaryzeALL$prob_SA <- round(summaryzeALL$prob_SA,8)
@@ -57,34 +57,6 @@ summaryzeALL$prob_SH <- 1- (summaryzeALL$prob_SR+ summaryzeALL$prob_SA)
 
 View(summaryzeALL)
 summaryzeALL$prob_SH+summaryzeALL$prob_SA + summaryzeALL$prob_SR
-
-
-summaryzeALL$prob_AR  <- NaN
-summaryzeALL$prob_HR  <- NaN 
-summaryzeALL$prob_IR  <- NaN
-summaryzeALL$prob_AD  <- NaN
-summaryzeALL$prob_HD  <- NaN 
-summaryzeALL$prob_ID  <- NaN
-
-summaryzeALL$prob_AH_pxlvd <- NaN 
-summaryzeALL$prob_AH_NO_pxlvd <- NaN 
-summaryzeALL$prob_HI_rmsvr <- NaN
-summaryzeALL$prob_HI_NO_rmsvr <-NaN 
-
-summaryzeALL$cost_A_pxlvd_treatment    <-NaN
-summaryzeALL$cost_A_NO_pxlvd_treatment <-NaN 
-summaryzeALL$cost_A_healthcare         <-NaN
-summaryzeALL$cost_A_healthcare_DayOne  <-NaN
-
-summaryzeALL$cost_H_rmsvr_treatment    <-NaN
-summaryzeALL$cost_H_NO_rmsvr_treatment <-NaN 
-summaryzeALL$cost_H_healthcare         <-NaN
-summaryzeALL$cost_H_healthcare_DayOne  <-NaN
-
-summaryzeALL$cost_I_medicine_treatment    <-NaN
-summaryzeALL$cost_I_NO_medicine_treatment <-NaN 
-summaryzeALL$cost_I_healthcare         <-NaN
-summaryzeALL$cost_I_healthcare_DayOne  <-NaN
 
 write.csv(summaryzeALL, paste(path, "Final_PobSet.csv", sep = "/"), 
           row.names=FALSE)
