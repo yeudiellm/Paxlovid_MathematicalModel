@@ -18,8 +18,8 @@ oddFromDataSet <- function(data_set, var_names){
       props  <- table(data_set[,i], data_set[,j])
       if (length(props)==1){
         print(props)
-        OR_matrix[i, j] <- 0.25
-        OR_matrix[j, i] <- 0.25
+        OR_matrix[i, j] <- 0
+        OR_matrix[j, i] <- 0
       }
       else{
         if (props[1,2]*props[2,1]!=0){
