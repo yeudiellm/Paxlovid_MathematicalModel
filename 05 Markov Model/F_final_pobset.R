@@ -6,10 +6,12 @@ library("tidyr")
 library("readr")  
 library("plotly")
 library("ggplot2")
-path = "D:/GitHub/Paxlovid_MathematicalModel/data"
+path = "D:/GitHub/Paxlovid_MathematicalModel/04 Multi Bernoulli"
 df_sim <- read.csv(paste(path, "Bernoulli_Full_Simulation.csv", sep = "/"))
-df_sim_0 <- df_sim %>% filter(exec==1)
-df_sim_0
+df_sim_0 <-df_sim %>% group_by(age_group, sex, comorbidity, covid, binary_patient_type)%>%
+           dplyr::summarise_all(mean)
+#df_sim_0 <- df_sim %>% filter(exec==1)
+df_sim_0 
 names(df_sim_0)
 str(df_sim_0)
 df_sim_0$binary_patient_type <- as.integer(ifelse(df_sim_0$binary_patient_type=="H", 1,0))
@@ -57,7 +59,7 @@ summaryzeALL$prob_SH <- 1- (summaryzeALL$prob_SR+ summaryzeALL$prob_SA)
 
 View(summaryzeALL)
 summaryzeALL$prob_SH+summaryzeALL$prob_SA + summaryzeALL$prob_SR
-
+path = "D:/GitHub/Paxlovid_MathematicalModel/05 Markov Model"
 write.csv(summaryzeALL, paste(path, "Final_PobSet.csv", sep = "/"), 
           row.names=FALSE)
 View(summaryzeALL)

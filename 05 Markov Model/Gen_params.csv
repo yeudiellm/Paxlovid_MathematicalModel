@@ -5,8 +5,8 @@ prob_ID,0.4
 prob_AH_pxlvd,0.008
 prob_AH_syntc,0.062
 prob_HI_rmsvr,0.382
-RRR_paxlovid,0.89
-RRR_redemsivir,0.8
+RRR_paxlovid,0.8888
+RRR_redemsivir,0.8648
 prob_HI_syntc,0.2045
 cost_A_pxlvd_drugs,105.875
 cost_A_pxlvd_DO_items,113.749

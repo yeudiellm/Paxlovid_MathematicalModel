@@ -1,0 +1,58 @@
+# VARIABLES DESCRIPTIVAS 
+* age_group: Grupo de edad de los pacientes 
+* sex: Sexo de los pacientes 
+* comorbidity: Si el grupo tiene o no comorbilidades
+* ckd_group: Si el presente grupo tiene o no enfermedad renal cronica
+* count_: Total de pacientes a nivel nacional para este grupo según la simulación de la distribución multi-bernoulli. 
+
+## PROBABILIDADES
+### Como salir de los sospechosos 
+* prob_SA: Valor en [0,1] Probabilidad de pertenecer al grupo ambulatorio tras ser sospechoso. 
+* prob_SH: Valor en [0,1] Probabilidad de pertenecer al grupo hospitalario tras ser sospechoso. 
+* prob_SR: Valor en [0,1] Probabilidad de pertenecer al grupo recuperados tras ser sospechoso. 
+
+### Como entrar en los recuperados 
+* prob_AR: Valor en [0,1] o distribución. Probabilidad de pasar de ambulatorio a recuperado en el día i.  
+* prob_HR: Valor en [0,1] o distribución. Probabilidad de pasar de hospitalario a recuperado en el día i.
+* prob_IR: Valor en [0,1] o distribución. Probabilidad de pasar de ICU a recuperado en el día i. 
+
+### Como entrar en los muertos 
+* prob_AD: Valor en [0,1] o distribución. Probabilidad de pasar de ambulatorio a recuperado en el día i.  
+* prob_HD: Valor en [0,1] o distribución. Probabilidad de pasar de hospitalario a recuperado en el día i.
+* prob_ID: Valor en [0,1] o distribución. Probabilidad de pasar de ICU a recuperado en el día i.
+
+## PROBABILIDADES QUE DEPENDEN DEL MEDICAMENTO 
+
+**Duda:** Considerando que tenemos RRR ¿hace sentido tener diferentes probas
+según medicamento o sería mejor ajustar el modelo a golpear todo contra los RRR?
+* prob_AH_pxlvd: Valor en [0,1]. Probabilidad de pasar de ambulatorio a hospitalario sabiendo que el paciente tomo paxlovid.
+* prob_AH_syntc: Valor en [0,1]. Probabilidad de pasar de ambulatorio a hospitalario con tratamiento sintomatico. 
+* prob_HI_rmsvr: Valor en [0,1]. Probabilidad de pasar de hospitalario a ICU sabiendo que el paciente tomo redemsivir. 
+* prob_HI_syntc: Valor en [0,1]. Probabilidad de pasar de hospitalario a ICU siendo que el paciente es sintomatico. 
+
+### Probabilidades 
+* rrr_rmsvr: Relative Risk Reduction of redemsivir. 
+* rrr_pxlvd: Relative Risk Reduction of paxlovid. 
+
+## Costos 
+### Ambulatorio 
+* cost_A_pxlvd_drugs: Costo de drogas para tratamiento con paxlovid  
+* cost_A_pxlvd_DO_items: Costo de items para tratamiento con paxlovid(día 1)
+* cost_A_pxlvd_items: Costo de items resto de tratamiento paxlovid     
+* cost_A_syntc_drugs: Costo de drogas tratamiento sintomatico    
+* cost_A_syntc_DO_items: Costo de items para tratamiento sintomatico (día 1)
+* cost_A_syntc_items: Costo de items para tratamiento sintomatico.     
+
+### Hospitalary
+* cost_H_rmsvr_drugs: Costo drogas hospitlario redemsivir.      
+* cost_H_rmsvr_DO_items: Costo items  hospitalario redemsivir.
+* cost_H_rmsvr_items: Costo items hospitalario redemsivir. 
+* cost_H_syntc_drugs: Costo drogas sintomatico hospitalario.      
+* cost_H_syntc_DO_items: Costo items hospitalario (día 1)
+* cost_H_syntc_items: Costo items sintomatico. 
+  
+### ICU
+* cost_I_syntc_DO_drugs: Costo drogas ICU sintomatico, primer dia 
+* cost_I_syntc_drugs: Costo drogas ICU sintomatico
+* cost_I_syntc_DO_items: Costo items primer dia, sintomatico
+* cost_I_syntc_items: Costo items sintomatico. 

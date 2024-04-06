@@ -59,7 +59,7 @@ define_parameters_with_row <- function(row,general_params){
     prob_IR =general_params$prob_IR,
     #Costs
     #Ambulatory
-    cost_A_pxlvd_drugs    = general_params$cost_A_pxlvd_drugs, 
+    cost_A_pxlvd_drugs    = general_params$cost_A_pxlvd_drugs, #Va a iterar 
     cost_A_pxlvd_DO_items = general_params$cost_A_pxlvd_DO_items,
     cost_A_pxlvd_items    = general_params$cost_A_pxlvd_items,
     cost_A_syntc_drugs    = general_params$cost_A_syntc_drugs, 
@@ -78,8 +78,8 @@ define_parameters_with_row <- function(row,general_params){
     cost_I_syntc_DO_items = general_params$cost_I_syntc_DO_items, 
     cost_I_syntc_items    = general_params$cost_I_syntc_items, 
     #reduction date rates
-    rrr_rmsvr = general_params$RRR_redemsivir, 
-    rrr_pxlvd = general_params$RRR_paxlovid,
+    rrr_rmsvr = general_params$RRR_redemsivir,  #si va a ejecutar
+    rrr_pxlvd = general_params$RRR_paxlovid,    #si va a ejecutar
     )
   return(params)
 }
