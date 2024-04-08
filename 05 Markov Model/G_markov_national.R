@@ -3,16 +3,16 @@ gc()
 library(diagram)
 library(heemod)
 library(ggplot2)
-path = "D:/GitHub/Paxlovid_MathematicalModel/data"
+path = "D:/GitHub/Paxlovid_MathematicalModel/05 Markov Model/data"
 general_params<- read.csv(paste(path, "Gen_params.csv", sep="/"), 
                       header=FALSE, row.names=1)
+
 general_params<- as.data.frame(t(general_params))
 markov_params <- read.csv(paste(path, "Final_PobSet.csv", sep = "/"))
-survival_syntc<- read.csv(paste(path, "Prob_Syntc_30days.csv", sep="/"))
+survival_syntc<- read.csv(paste(path, "COX_SurvProb_30days.csv", sep="/"))
 survival_syntc$patient_type <- as.integer(
                             ifelse(survival_syntc$patient_type=="H", 1,0))
 #Convertir survival prob días a vectores
-
 survival_to_death <- function(row, sdf, bin_patient_type){
   keys = paste('day_', rep(1:30), sep="")
   filter_surv =sdf %>% dplyr::filter(age_group==row$age_group, 
@@ -33,8 +33,8 @@ markov_params$age_inf = lapply(markov_params$age_group,interval_to_num)
 group_vars  <- c("age_group", "sex", "comorbidity", "ckd_group")
 
 #GLOBAL VARIABLES 
-vec_prob_AD <- rep(0.01, 30)  
-vec_prob_HD <- rep(0.01, 30)
+vec_prob_AD <- rep(0.01, 30)  #Change according to AgeGroup
+vec_prob_HD <- rep(0.01, 30)  #Change according to AgeGroup
 
 #Defining parameters
 define_parameters_with_row <- function(row,general_params){
@@ -84,6 +84,18 @@ define_parameters_with_row <- function(row,general_params){
   return(params)
 }
 
+# Define DSA
+se_DSA <- define_dsa(
+  rrr_pxlvd, 0.7213, 0.9556,
+  rrr_rmsvr, 0.4141, 0.9688,
+  cost_A_pxlvd_drugs, 51.6, 262.6,
+  prob_AH_pxlvd, 0.75*general_params$prob_AH_pxlvd, 
+                 1.25*general_params$prob_AH_pxlvd, 
+  prob_AH_syntc, 0.75*general_params$prob_AH_syntc,
+                 1.25*general_params$prob_AH_syntc)
+
+
+# Matrix
 mat_pxlvd <- define_transition(
   state_names = c("S","A", "H", "I", "R", "D"),
   C   ,prob_SA,prob_SH       ,0.00                ,prob_SR ,0.00,              #S
@@ -121,9 +133,6 @@ mat_syntc <- define_transition(
   0.00,0.00   ,0.00            ,C                 ,prob_IR,prob_ID,              #I 
   0.00,0.00   ,0.00            ,0.00              ,1.00   ,0.00   ,              #R 
   0.00,0.00   ,0.00            ,0.00              ,0.00   ,1.00    )             #D
-
-
-
 
 #Control States
 state_Suspicious <- define_state(
@@ -236,14 +245,16 @@ run_model_2<- function(strat,param, count_pob){
     return(res_mod)
 }
 
+################################################################################
+######################### RUNNING MODELS #######################################
 #Strategies
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
   row = markov_params[irow, ]
-  count_pob   = markov_params[irow, "count_"]
+  count_pob   = as.integer(markov_params[irow, "count_"])
   medical_strategy = decision_strategy1(markov_params[irow,])
-  vec_prob_AD <<- survival_to_death (row, survival_syntc, 0)
-  vec_prob_HD <<- survival_to_death (row, survival_syntc, 1)
+  vec_prob_AD <<- survival_to_death(row, survival_syntc, 0)
+  vec_prob_HD <<- survival_to_death(row, survival_syntc, 1)
   param <- define_parameters_with_row(markov_params[irow,],general_params)
   if(medical_strategy=="PXLVD"){
     res_mod <- run_model_2(strat_pxlvd, param, count_pob)
@@ -254,11 +265,15 @@ for ( irow in 1:nrow(markov_params)){
   if(medical_strategy=="SYNTC"){
     res_mod <- run_model_2(strat_syntc, param, count_pob)
   }
+  res_dsa <- run_dsa(model = res_mod,dsa = se_DSA)
   summary_count = res_mod$eval_strategy_list$strategy$counts
   summary_cost  = res_mod$eval_strategy_list$strategy$values
+  summary_dsa   = res_dsa$dsa
   write.csv(summary_count,paste(path,"/strat1/count/", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_cost,paste(path, "/strat1/cost/", irow, ".csv", sep=""),
+            row.names=FALSE)
+  write.csv(summary_dsa,paste(path, "/strat1/dsa/", irow, ".csv", sep=""),
             row.names=FALSE)
 }
 
@@ -266,12 +281,10 @@ for ( irow in 1:nrow(markov_params)){
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
   row = markov_params[irow, ]
-  count_pob   = markov_params[irow, "count_"]
+  count_pob   = as.integer(markov_params[irow, "count_"])
   medical_strategy = decision_strategy2(markov_params[irow,])
-  vec_prob_AD <<- survival_to_death (row, 
-                                              survival_syntc, 0)
-  vec_prob_HD <<- survival_to_death (row,
-                                              survival_syntc, 1)
+  vec_prob_AD <<- survival_to_death (row, survival_syntc, 0)
+  vec_prob_HD <<- survival_to_death (row, survival_syntc, 1)
   param <- define_parameters_with_row(markov_params[irow,],general_params)
   if(medical_strategy=="PXLVD"){
     res_mod <- run_model_2(strat_pxlvd, param, count_pob)
@@ -279,11 +292,15 @@ for ( irow in 1:nrow(markov_params)){
   if(medical_strategy=="SYNTC"){
     res_mod <- run_model_2(strat_syntc, param, count_pob)
   }
+  res_dsa <- run_dsa(model = res_mod,dsa = se_DSA)
   summary_count = res_mod$eval_strategy_list$strategy$counts
-  summary_cost = res_mod$eval_strategy_list$strategy$values
+  summary_cost  = res_mod$eval_strategy_list$strategy$values
+  summary_dsa   = res_dsa$dsa
   write.csv(summary_count,paste(path,"/strat2/count/", irow, ".csv", sep=""),
             row.names=FALSE)
-  write.csv(summary_cost,paste(path,"/strat2/cost/", irow, ".csv", sep=""),
+  write.csv(summary_cost,paste(path, "/strat2/cost/", irow, ".csv", sep=""),
+            row.names=FALSE)
+  write.csv(summary_dsa,paste(path, "/strat2/dsa/", irow, ".csv", sep=""),
             row.names=FALSE)
 }
 

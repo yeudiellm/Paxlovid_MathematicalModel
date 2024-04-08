@@ -1,9 +1,9 @@
 prob_AR,0.31
 prob_HR,0.66
-prob_IR,0.37
-prob_ID,0.4
-prob_AH_pxlvd,0.008
-prob_AH_syntc,0.062
+prob_IR,0.25
+prob_ID,0.75
+prob_AH_pxlvd,0.007173
+prob_AH_syntc,0.064516
 prob_HI_rmsvr,0.382
 RRR_paxlovid,0.8888
 RRR_redemsivir,0.8648
