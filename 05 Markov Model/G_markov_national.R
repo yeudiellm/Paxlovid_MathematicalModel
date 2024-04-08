@@ -139,17 +139,17 @@ state_Suspicious <- define_state(
   cost_drugs = 0, 
   cost_items = 0,
   cost_total = 0,
-  count_drugs= 0)
+  count_deaths= 0)
 state_Recovery   <- define_state(
   cost_drugs = 0, 
   cost_items = 0, 
   cost_total = 0, 
-  count_drugs= 0)
+  count_deaths= 0)
 state_Death      <- define_state(
   cost_drugs = 0, 
   cost_items = 0, 
   cost_total = 0, 
-  count_drugs= 0)
+  count_deaths= 1)
 #Sickness states
 state_ICU        <- define_state(
   cost_drugs = as.numeric(ifelse(state_time<=1, cost_I_syntc_DO_drugs,
@@ -157,7 +157,7 @@ state_ICU        <- define_state(
   cost_items = as.numeric(ifelse(state_time<=1, cost_I_syntc_DO_items, 
                                                 cost_I_syntc_items)), 
   cost_total = cost_drugs + cost_items, 
-  count_drugs= 0)
+  count_deaths= 0)
 
 state_A_pxlvd  <- define_state(
   cost_drugs = as.numeric(ifelse(state_time<=5, cost_A_pxlvd_drugs,
@@ -165,14 +165,14 @@ state_A_pxlvd  <- define_state(
   cost_items = as.numeric(ifelse(state_time<=1, cost_A_pxlvd_DO_items, 
                                                 cost_A_pxlvd_items)), 
   cost_total = cost_drugs + cost_items, 
-  count_drugs= 1)
+  count_deaths= 1)
 
 state_A_syntc  <- define_state(
   cost_drugs = cost_A_syntc_drugs,
   cost_items = as.numeric(ifelse(state_time<=1, cost_A_syntc_DO_items, 
                                                 cost_A_syntc_items)), 
   cost_total = cost_drugs + cost_items,
-  count_drugs= 0)
+  count_deaths= 0)
 
 state_H_rmsvr <- define_state(
   cost_drugs = as.numeric(ifelse(state_time<=3, cost_H_rmsvr_drugs,
@@ -180,14 +180,14 @@ state_H_rmsvr <- define_state(
   cost_items = as.numeric(ifelse(state_time<=1, cost_H_rmsvr_DO_items, 
                                  cost_H_rmsvr_items)), 
   cost_total = cost_drugs + cost_items, 
-  count_drugs= 0)
+  count_deaths= 0)
 
 state_H_syntc <- define_state(
   cost_drugs = cost_H_syntc_drugs,
   cost_items = as.numeric(ifelse(state_time<=1, cost_H_syntc_DO_items, 
                                  cost_H_syntc_items)), 
   cost_total = cost_drugs + cost_items, 
-  count_drugs=0)
+  count_deaths=0)
 
 #Medical Strategies
 strat_pxlvd <- define_strategy(
@@ -240,7 +240,7 @@ run_model_2<- function(strat,param, count_pob){
       cycles = 28,
       method = "end",
       cost = cost_total,
-      effect = count_drugs
+      effect = count_deaths
     ) 
     return(res_mod)
 }
