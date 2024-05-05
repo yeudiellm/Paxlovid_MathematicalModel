@@ -3,12 +3,12 @@ gc()
 library(diagram)
 library(heemod)
 library(ggplot2)
-path = "D:/GitHub/Paxlovid_MathematicalModel/data"
+path = "D:/GitHub/Paxlovid_MathematicalModel/05 Markov Model/data"
 markov_params <- read.csv(paste(path, "Final_PobSet.csv", sep = "/"))
 
 sum(markov_params$count_)
 min(markov_params$count_)
-min(markov_params$count_)
+
 for(i in 1:90){
   a =read.csv(paste(path,"/strat1/count/", i, ".csv", sep=""))
   if(exists("s1_count")){

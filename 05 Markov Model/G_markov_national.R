@@ -165,7 +165,7 @@ state_A_pxlvd  <- define_state(
   cost_items = as.numeric(ifelse(state_time<=1, cost_A_pxlvd_DO_items, 
                                                 cost_A_pxlvd_items)), 
   cost_total = cost_drugs + cost_items, 
-  count_deaths= 1)
+  count_deaths= 0)
 
 state_A_syntc  <- define_state(
   cost_drugs = cost_A_syntc_drugs,
