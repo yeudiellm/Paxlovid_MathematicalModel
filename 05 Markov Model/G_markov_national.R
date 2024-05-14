@@ -149,7 +149,7 @@ state_Death      <- define_state(
   cost_drugs = 0, 
   cost_items = 0, 
   cost_total = 0, 
-  count_deaths= 1)
+  count_deaths= as.numeric(ifelse(model_time==28, 1, 0)))
 #Sickness states
 state_ICU        <- define_state(
   cost_drugs = as.numeric(ifelse(state_time<=1, cost_I_syntc_DO_drugs,
