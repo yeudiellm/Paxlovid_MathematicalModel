@@ -94,6 +94,16 @@ se_DSA <- define_dsa(
   prob_AH_syntc, 0.75*general_params$prob_AH_syntc,
                  1.25*general_params$prob_AH_syntc)
 
+# Define PSA
+se_PSA <- define_psa(
+  rrr_pxlvd ~ normal(mean=general_params$RRR_paxlovid,sd=0.03408163265),
+  rrr_rmsvr ~ normal(mean=general_params$RRR_redemsivir,sd=0.05306122449),
+  cost_A_pxlvd_drugs~ gamma(mean=general_params$cost_A_pxlvd_drugs, 
+                            sd= 1),
+  prob_AH_pxlvd ~ binomial(prob= general_params$prob_AH_pxlvd, 
+                           size=40),
+  prob_AH_syntc ~ binomial(prob=general_params$prob_AH_syntc, 
+                           size=40))
 
 # Matrix
 mat_pxlvd <- define_transition(
@@ -247,6 +257,27 @@ run_model_2<- function(strat,param, count_pob){
 
 ################################################################################
 ######################### RUNNING MODELS #######################################
+irow=1
+print(markov_params[irow, group_vars])
+row = markov_params[irow, ]
+count_pob   = as.integer(markov_params[irow, "count_"])
+medical_strategy = decision_strategy1(markov_params[irow,])
+
+vec_prob_AD <<- survival_to_death(row, survival_syntc, 0)
+vec_prob_HD <<- survival_to_death(row, survival_syntc, 1)
+param <- define_parameters_with_row(markov_params[irow,],general_params)
+medical_strategy
+res_mod <- run_model_2(strat_pxlvd, param, count_pob)
+summary(res_mod)
+pm <- run_psa(
+  model = res_mod,
+  psa = se_PSA,
+  N = 100
+)
+
+View(pm$psa)
+
+
 #Strategies
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
