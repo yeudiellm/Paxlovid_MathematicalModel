@@ -39,6 +39,9 @@ vec_prob_HD <- rep(0.01, 30)  #Change according to AgeGroup
 #Defining parameters
 define_parameters_with_row <- function(row,general_params){
   params <- define_parameters(
+    #reduction rates
+    rrr_rmsvr = general_params$RRR_redemsivir,  #si va a ejecutar
+    rrr_pxlvd = general_params$RRR_paxlovid,    #si va a ejecutar
     #Suspicios to Sickness state
     #initial_probs_sum = row$prob_SA+row$prob_SH+row$prob_SR,
     prob_SA =row$prob_SA,
@@ -48,6 +51,13 @@ define_parameters_with_row <- function(row,general_params){
     prob_AD =as.numeric(vec_prob_AD[model_time]), 
     prob_HD =as.numeric(vec_prob_HD[model_time]), 
     prob_ID =general_params$prob_ID,
+    #Sickness state to Death 
+    prob_AD_pxlvd = max(prob_AD - prob_AD*rrr_pxlvd, 0.00),
+    prob_HD_pxlvd = max(prob_HD - prob_HD*rrr_pxlvd, 0.00),
+    prob_ID_pxlvd = max(prob_ID - prob_ID*rrr_pxlvd, 0.00),
+    prob_AD_rmsvr = max(prob_AD - prob_AD*rrr_rmsvr, 0.00),
+    prob_HD_rmsvr = max(prob_HD - prob_HD*rrr_rmsvr, 0.00),
+    prob_ID_rmsvr = max(prob_ID - prob_ID*rrr_rmsvr, 0.00),
     #Transition sickness 
     prob_AH_pxlvd =general_params$prob_AH_pxlvd, 
     prob_AH_syntc =general_params$prob_AH_syntc, 
@@ -77,9 +87,6 @@ define_parameters_with_row <- function(row,general_params){
     cost_I_syntc_drugs    = general_params$cost_I_syntc_drugs, 
     cost_I_syntc_DO_items = general_params$cost_I_syntc_DO_items, 
     cost_I_syntc_items    = general_params$cost_I_syntc_items, 
-    #reduction date rates
-    rrr_rmsvr = general_params$RRR_redemsivir,  #si va a ejecutar
-    rrr_pxlvd = general_params$RRR_paxlovid,    #si va a ejecutar
     )
   return(params)
 }
@@ -96,53 +103,46 @@ se_DSA <- define_dsa(
 
 # Define PSA
 se_PSA <- define_psa(
-  rrr_pxlvd ~ normal(mean=general_params$RRR_paxlovid,sd=0.03408163265),
-  rrr_rmsvr ~ normal(mean=general_params$RRR_redemsivir,sd=0.05306122449),
+  rrr_pxlvd ~ lognormal(mean=general_params$RRR_paxlovid,
+                        sdlog=0.07175619284),
+  rrr_rmsvr ~ lognormal(mean=general_params$RRR_redemsivir,
+                        sdlog=0.2168241586),
   cost_A_pxlvd_drugs~ gamma(mean=general_params$cost_A_pxlvd_drugs, 
-                            sd= 1),
-  prob_AH_pxlvd ~ binomial(prob= general_params$prob_AH_pxlvd, 
-                           size=40),
-  prob_AH_syntc ~ binomial(prob=general_params$prob_AH_syntc, 
-                           size=40))
+                            sd=sqrt(general_params$cost_A_pxlvd_drugs)),
+  prob_AH_pxlvd ~ binomial(prob=general_params$prob_AH_pxlvd, 
+                           size=1000),
+  prob_AH_syntc ~ binomial(prob=general_params$prob_AH_syntc,
+                           size=1000)
+  )
 
 # Matrix
 mat_pxlvd <- define_transition(
   state_names = c("S","A", "H", "I", "R", "D"),
-  C   ,prob_SA,prob_SH       ,0.00                ,prob_SR ,0.00,              #S
-  0.00,C      ,prob_AH_pxlvd ,0.00                
-              ,min(prob_AR,1-prob_AH_pxlvd-(prob_AD-prob_AD*rrr_pxlvd))
-                                                  ,prob_AD-prob_AD*rrr_pxlvd,  #A
-  0.00,0.00   ,C             ,prob_HI_syntc       
-              ,min(prob_HR,1-prob_HI_syntc-(prob_HD-prob_HD*rrr_pxlvd)) 
-                                                  ,prob_HD-prob_HD*rrr_pxlvd,  #H   
-  0.00,0.00   ,0.00          ,C                   ,prob_IR ,prob_ID-
-                                                            prob_ID*rrr_pxlvd, #I 
-  0.00,0.00   ,0.00          ,0.00                ,1.00    ,0.00,              #R 
-  0.00,0.00   ,0.00          ,0.00                ,0.00    ,1.00    )          #D
+  C,prob_SA,prob_SH,0.00,prob_SR,0.00,   #S
+  0.00,C,prob_AH_pxlvd,0.00,min(prob_AR,1-prob_AH_pxlvd-prob_AD_pxlvd),prob_AD_pxlvd, #A
+  0.00,0.00,C,prob_HI_syntc,min(prob_HR,1-prob_HI_syntc-prob_HD_pxlvd),prob_HD_pxlvd,#H   
+  0.00,0.00,0.00,C,prob_IR,prob_ID_pxlvd,#I 
+  0.00,0.00,0.00,0.00,1.00,0.00,         #R 
+  0.00,0.00,0.00,0.00,0.00,1.00)         #D
 
 mat_rmsvr <- define_transition(
   state_names = c("S","A", "H", "I", "R", "D"),
-  C   ,prob_SA,prob_SH         ,0.00              ,prob_SR ,0.00,               #S
-  0.00,C      ,prob_AH_syntc   ,0.00              
-              ,min(prob_AR, 1-prob_AH_syntc-(prob_AD-prob_AD*rrr_rmsvr)) 
-                                                  ,prob_AD-(prob_AD*rrr_rmsvr), #A
-  0.00,0.00   ,C               ,prob_HI_rmsvr     
-              ,min(prob_HR, 1-prob_HI_rmsvr-(prob_HD-prob_HD*rrr_rmsvr)) 
-                                                  ,prob_HD-(prob_HD*rrr_rmsvr), #H   
-  0.00,0.00   ,0.00            ,C                 ,prob_IR ,prob_ID-
-                                                            (prob_ID*rrr_rmsvr), #I 
-  0.00,0.00   ,0.00            ,0.00              ,1.00    ,0.00   ,             #R 
-  0.00,0.00   ,0.00            ,0.00              ,0.00    ,1.00    )            #D
+  C,prob_SA,prob_SH,0.00,prob_SR,0.00,    #S
+  0.00,C,prob_AH_syntc,0.00,min(prob_AR,1-prob_AH_syntc-prob_AD_rmsvr),prob_AD_rmsvr, #A
+  0.00,0.00,C,prob_HI_rmsvr,min(prob_HR,1-prob_HI_rmsvr-prob_HD_rmsvr),prob_HD_rmsvr, #H   
+  0.00,0.00,0.00,C,prob_IR,prob_ID_rmsvr, #I 
+  0.00,0.00,0.00,0.00,1.00,0.00,          #R 
+  0.00,0.00,0.00,0.00,0.00,1.00)          #D
+
 mat_syntc <- define_transition(
   state_names = c("S","A", "H", "I", "R", "D"),
-  0.00,prob_SA,prob_SH         ,0.00              ,prob_SR ,0.00,                #S
-  0.00,C      ,prob_AH_syntc   ,0.00              
-              ,min(prob_AR, 1-prob_AH_syntc-prob_AD)      ,prob_AD,              #A
-  0.00,0.00   ,C               ,prob_HI_syntc     
-              ,min(prob_HR, 1-prob_HI_syntc-prob_HD)      ,prob_HD,              #H   
-  0.00,0.00   ,0.00            ,C                 ,prob_IR,prob_ID,              #I 
-  0.00,0.00   ,0.00            ,0.00              ,1.00   ,0.00   ,              #R 
-  0.00,0.00   ,0.00            ,0.00              ,0.00   ,1.00    )             #D
+  0.00,prob_SA,prob_SH,0.00,prob_SR,0.00, #S
+  0.00,C,prob_AH_syntc,0.00,min(prob_AR, 1-prob_AH_syntc-prob_AD),prob_AD,            #A
+  0.00,0.00,C,prob_HI_syntc,min(prob_HR, 1-prob_HI_syntc-prob_HD),prob_HD,            #H   
+  0.00,0.00,0.00,C,prob_IR,prob_ID,       #I 
+  0.00,0.00,0.00,0.00,1.00,0.00,          #R 
+  0.00,0.00,0.00,0.00,0.00,1.00)          #D
+
 
 #Control States
 state_Suspicious <- define_state(
@@ -257,33 +257,13 @@ run_model_2<- function(strat,param, count_pob){
 
 ################################################################################
 ######################### RUNNING MODELS #######################################
-irow=1
-print(markov_params[irow, group_vars])
-row = markov_params[irow, ]
-count_pob   = as.integer(markov_params[irow, "count_"])
-medical_strategy = decision_strategy1(markov_params[irow,])
-
-vec_prob_AD <<- survival_to_death(row, survival_syntc, 0)
-vec_prob_HD <<- survival_to_death(row, survival_syntc, 1)
-param <- define_parameters_with_row(markov_params[irow,],general_params)
-medical_strategy
-res_mod <- run_model_2(strat_pxlvd, param, count_pob)
-summary(res_mod)
-pm <- run_psa(
-  model = res_mod,
-  psa = se_PSA,
-  N = 100
-)
-
-View(pm$psa)
-
-
 #Strategies
 for ( irow in 1:nrow(markov_params)){
   print(markov_params[irow, group_vars])
   row = markov_params[irow, ]
   count_pob   = as.integer(markov_params[irow, "count_"])
   medical_strategy = decision_strategy1(markov_params[irow,])
+  print(medical_strategy)
   vec_prob_AD <<- survival_to_death(row, survival_syntc, 0)
   vec_prob_HD <<- survival_to_death(row, survival_syntc, 1)
   param <- define_parameters_with_row(markov_params[irow,],general_params)
@@ -296,15 +276,21 @@ for ( irow in 1:nrow(markov_params)){
   if(medical_strategy=="SYNTC"){
     res_mod <- run_model_2(strat_syntc, param, count_pob)
   }
+  print('run dsa')
   res_dsa <- run_dsa(model = res_mod,dsa = se_DSA)
+  print('run psa')
+  res_psa <- run_psa(model = res_mod,psa = se_PSA,N = 100)
   summary_count = res_mod$eval_strategy_list$strategy$counts
   summary_cost  = res_mod$eval_strategy_list$strategy$values
-  summary_dsa   = res_dsa$dsa
+  summary_dsa  = res_dsa$dsa
+  summary_psa   = res_psa$psa
   write.csv(summary_count,paste(path,"/strat1/count/", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_cost,paste(path, "/strat1/cost/", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_dsa,paste(path, "/strat1/dsa/", irow, ".csv", sep=""),
+            row.names=FALSE)
+  write.csv(summary_psa,paste(path, "/strat1/psa/", irow, ".csv", sep=""),
             row.names=FALSE)
 }
 
@@ -314,8 +300,9 @@ for ( irow in 1:nrow(markov_params)){
   row = markov_params[irow, ]
   count_pob   = as.integer(markov_params[irow, "count_"])
   medical_strategy = decision_strategy2(markov_params[irow,])
-  vec_prob_AD <<- survival_to_death (row, survival_syntc, 0)
-  vec_prob_HD <<- survival_to_death (row, survival_syntc, 1)
+  print(medical_strategy)
+  vec_prob_AD <<- survival_to_death(row, survival_syntc, 0)
+  vec_prob_HD <<- survival_to_death(row, survival_syntc, 1)
   param <- define_parameters_with_row(markov_params[irow,],general_params)
   if(medical_strategy=="PXLVD"){
     res_mod <- run_model_2(strat_pxlvd, param, count_pob)
@@ -323,18 +310,23 @@ for ( irow in 1:nrow(markov_params)){
   if(medical_strategy=="SYNTC"){
     res_mod <- run_model_2(strat_syntc, param, count_pob)
   }
+  print('run dsa')
   res_dsa <- run_dsa(model = res_mod,dsa = se_DSA)
+  print('run psa')
+  res_psa <- run_psa(model = res_mod,psa = se_PSA,N = 100)
   summary_count = res_mod$eval_strategy_list$strategy$counts
   summary_cost  = res_mod$eval_strategy_list$strategy$values
-  summary_dsa   = res_dsa$dsa
+  summary_dsa  = res_dsa$dsa
+  summary_psa   = res_psa$psa
   write.csv(summary_count,paste(path,"/strat2/count/", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_cost,paste(path, "/strat2/cost/", irow, ".csv", sep=""),
             row.names=FALSE)
   write.csv(summary_dsa,paste(path, "/strat2/dsa/", irow, ".csv", sep=""),
             row.names=FALSE)
+  write.csv(summary_psa,paste(path, "/strat2/psa/", irow, ".csv", sep=""),
+            row.names=FALSE)
 }
-
 
 
   
